@@ -32,7 +32,7 @@ if (false == in_array($opts['command'], $commands)) {
     exit(1);
 }
 
-INIFactory::$INIPAY_ROOT = dirname(__FILE__) . '/vendor/INIpay50/';
+INIFactory::$INIPAY_ROOT = dirname(__FILE__) . '/../vendor/INIpay50/';
 INIFactory::$ADMIN       = $opts['admin'];
 INIFactory::$MID         = $opts['mid'];
 ob_start();
@@ -124,16 +124,23 @@ class INIFactory {
         return json_encode($result);
     }
 
-    static public function cancel($tid, $code = 1, $message = '') {
-        return false;
+    static public function cancel($params) {
+        $params_keys = array(
+            'tid', 'message'
+        );  
+        $result_keys     = array(
+            'ResultCode', 'ResultMsg', 'ResultErrorCode', 'CancelDate', 'CancelTime'
+        );
         $inipay = self::get_instance();
         $inipay->SetField('type',       'cancel');
-        $inipay->SetField('tid',        $tid);
-        $inipay->SetField('cancelmsg',  $message);
-        $inipay->SetField('cancelcode', $code);	//취소사유코드
+
+        self::assign_params($inipay, $params, $params_keys);
+        
         $inipay->startAction();
 
-        return $inipay;
+        $result = self::sanitize_result($inipay, $result_keys);
+
+        return json_encode($result);
     }
 
     static private function get_instance() {
@@ -166,35 +173,35 @@ class INIFactory {
     static private function get_pgid($paymethod) {
         $pgid = $paymethod;
         switch($paymethod){
-            case(Card): 			// 신용카드
+            case(Card):             // 신용카드
                 $pgid = "CARD"; break;
-            case(Account): 		// 은행 계좌 이체
+            case(Account):      // 은행 계좌 이체
                 $pgid = "ACCT"; break;
             case(DirectBank): // 실시간 계좌 이체
                 $pgid = "DBNK"; break;
-            case(OCBPoint): 	// OCB
+            case(OCBPoint):     // OCB
                 $pgid = "OCBP"; break;
-            case(VCard): 			// ISP 결제
+            case(VCard):            // ISP 결제
                 $pgid = "ISP_"; break;
-            case(HPP): 				// 휴대폰 결제
+            case(HPP):              // 휴대폰 결제
                 $pgid = "HPP_"; break;
-            case(ArsBill): 		// 700 전화결제
+            case(ArsBill):      // 700 전화결제
                 $pgid = "ARSB"; break;
-            case(PhoneBill): 	// PhoneBill 결제(받는 전화)
+            case(PhoneBill):    // PhoneBill 결제(받는 전화)
                 $pgid = "PHNB"; break;
             case(Ars1588Bill):// 1588 전화결제
                 $pgid = "1588"; break;
-            case(VBank):  		// 가상계좌 이체
+            case(VBank):        // 가상계좌 이체
                 $pgid = "VBNK"; break;
-            case(Culture):  	// 문화상품권 결제
+            case(Culture):      // 문화상품권 결제
                 $pgid = "CULT"; break;
-            case(CMS): 				// CMS 결제
+            case(CMS):              // CMS 결제
                 $pgid = "CMS_"; break;
-            case(AUTH): 			// 신용카드 유효성 검사
+            case(AUTH):             // 신용카드 유효성 검사
                 $pgid = "AUTH"; break;
-            case(INIcard): 		// 네티머니 결제
+            case(INIcard):      // 네티머니 결제
                 $pgid = "INIC"; break;
-            case(MDX):  			// 몬덱스카드
+            case(MDX):              // 몬덱스카드
                 $pgid = "MDX_"; break;
         }
         return $pgid;
